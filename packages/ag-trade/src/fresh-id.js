@@ -1,5 +1,5 @@
 // @ts-check
-import { Far } from '@endo/far';
+import { E, Far } from '@endo/far';
 
 const trunc = {
   day: t => t.slice(0, '2001-01-01'.length),
@@ -24,20 +24,17 @@ const next = (t, slug = '_', t0, prev, seq) => {
   return `${slug}${friendly}.${seq}`;
 };
 
-/**
- * @param {unknown} _powers
- * @param {{ now?: () => number }} io
- */
-export const make = (_powers, io = {}) => {
-  const { now = () => Date.now() } = io;
-
-  const start = (slug = '') => {
-    const t0 = new Date(now()).toISOString();
+export const make = async self => {
+  /**
+   * @param {ReturnType<import('./clock').make>} clock
+   */
+  const start = async (clock, slug = '') => {
+    const t0 = new Date(await E(clock).time()).toISOString();
     let seq = 0n;
     let prev = trunc.day(t0);
     return Far('Fresh', {
-      next: () => {
-        const t = new Date(now()).toISOString();
+      next: async () => {
+        const t = new Date(await E(clock).time()).toISOString();
         const out = next(t, slug, t0, prev, seq);
         prev = t;
         seq += 1n;

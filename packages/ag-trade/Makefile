@@ -17,13 +17,19 @@ $(PET)/alice: $(PET)/alice-wk $(PET)/fresh-trade-id
 	endo adopt 0 wallet --as alice
 	endo adopt 1 fresh --as alice
 
-$(PET)/fresh-trade-id: $(PET)/fresh
-	endo eval "E(fresh).start('trade-')" fresh -n fresh-trade-id
+$(PET)/fresh-trade-id: $(PET)/fresh $(PET)/clock
+	endo eval "E(fresh).start(clock, 'trade-')" fresh -n fresh-trade-id clock
 
-# making fresh IDs requires non-deterministic inputs
+# making fresh IDs requires non-deterministic inputs: clock access
+fresh-id: $(PET)/fresh-bid-id $(PET)/clock
+	endo eval "E(bid).next()" bid:fresh-bid-id
+
+$(PET)/fresh-bid-id:
+	endo eval "E(fresh).start(clock, 'bid')" -n fresh-bid-id fresh clock
+
 $(PET)/fresh: src/fresh-id.js
-	endo make --UNSAFE src/fresh-id.js -n fresh
-
+	endo make src/fresh-id.js -n fresh
+ 
 # in makeWalletKit, it's too easy to get the rpc, lcd order wrong. should be named
 $(PET)/alice-wk: $(PET)/local $(PET)/client-maker
 	endo eval "E(wf).makeWalletKit('${ALICE_SECRET}', local.rpc, local.lcd)" \
@@ -31,19 +37,26 @@ $(PET)/alice-wk: $(PET)/local $(PET)/client-maker
 
 client-maker: $(PET)/client-maker
 
-$(PET)/client-maker: src/smartWallet.js
-	@echo ++ start smart wallet caplet -- TODO: should not need UNSAFE
-	endo make --UNSAFE src/smartWallet.js -n client-maker
-
 node-info: $(PET)/local
 	endo eval "E(local.lcd).getJSON('/node_info').then(i => i.node_info)" local
 
 $(PET)/local: src/net-local.js $(PET)/cosmos-fetch
 	endo make src/net-local.js -n local -p cosmos-fetch
 
+# only the code below here runs unconfined
+plug-ins: $(PET)/client-maker $(PET)/cosmos-fetch $(PET)/clock
+
+$(PET)/client-maker: src/smartWallet.js
+	@echo ++ start smart wallet caplet -- TODO: should not need UNSAFE
+	endo make --UNSAFE src/smartWallet.js -n client-maker
+
 $(PET)/cosmos-fetch: src/cosmosFetch.js
 	@echo ++ install cosmos fetch plugin
 	endo make --UNSAFE src/cosmosFetch.js -n cosmos-fetch
+
+# WIP: factor clock out of fresh-id
+$(PET)/clock:
+	 endo make --UNSAFE src/clock.js -n clock
 
 clean:
 	endo reset
