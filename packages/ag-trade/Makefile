@@ -4,6 +4,12 @@ PET=$(STATE)/pet-store
 where:
 	@echo state: $(STATE)
 
+client-maker: $(PET)/client-maker
+
+$(PET)/client-maker: src/smartWallet.js
+	@echo ++ start smart wallet caplet -- TODO: should not need UNSAFE
+	endo make --UNSAFE src/smartWallet.js -n client-maker
+
 node-info: $(PET)/local
 	endo eval "E(local.lcd).getJSON('/node_info').then(i => i.node_info)" local
 
