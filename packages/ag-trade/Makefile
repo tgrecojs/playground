@@ -21,10 +21,10 @@ $(PET)/fresh-trade-id: $(PET)/fresh $(PET)/clock
 	endo eval "E(fresh).start(clock, 'trade-')" fresh -n fresh-trade-id clock
 
 # making fresh IDs requires non-deterministic inputs: clock access
-fresh-id: $(PET)/fresh-bid-id $(PET)/clock
+fresh-id: $(PET)/fresh-bid-id
 	endo eval "E(bid).next()" bid:fresh-bid-id
 
-$(PET)/fresh-bid-id:
+$(PET)/fresh-bid-id: $(PET)/fresh
 	endo eval "E(fresh).start(clock, 'bid')" -n fresh-bid-id fresh clock
 
 $(PET)/fresh: src/fresh-id.js
