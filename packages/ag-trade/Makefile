@@ -29,11 +29,22 @@ $(PET)/fresh-bid-id: $(PET)/fresh
 
 $(PET)/fresh: src/fresh-id.js
 	endo make src/fresh-id.js -n fresh
- 
+
 # in makeWalletKit, it's too easy to get the rpc, lcd order wrong. should be named
 $(PET)/alice-wk: $(PET)/local $(PET)/client-maker
 	endo eval "E(wf).makeWalletKit('${ALICE_SECRET}', local.rpc, local.lcd)" \
 		local wf:client-maker -n alice-wk
+
+well-known-brands: $(PET)/query-tool
+	endo eval "E(E(queryTool).lookup('agoricNames', 'brand')).entries().then(kvs => Object.fromEntries(kvs))" -n well-known-brands queryTool:query-tool
+
+unmarshal: $(PET)/brand-graph
+
+$(PET)/brand-graph: $(PET)/query-tool
+	endo eval "E(queryTool).queryData('published.agoricNames.brand').then(kvs => Object.fromEntries(kvs))" queryTool:query-tool -n brand-graph
+
+$(PET)/query-tool: $(PET)/client-maker $(PET)/local
+	endo eval "E(factory).makeQueryTool(local.lcd)" -n query-tool local factory:client-maker
 
 client-maker: $(PET)/client-maker
 
@@ -45,6 +56,10 @@ $(PET)/local: src/net-local.js $(PET)/cosmos-fetch
 
 # only the code below here runs unconfined
 plug-ins: $(PET)/client-maker $(PET)/cosmos-fetch $(PET)/clock
+
+fetch-plug-in: $(PET)/cosmos-fetch
+
+clock-plug-in: $(PET)/clock
 
 $(PET)/client-maker: src/smartWallet.js
 	@echo ++ start smart wallet caplet -- TODO: should not need UNSAFE
