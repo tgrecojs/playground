@@ -7,16 +7,8 @@
  */
 import { E } from '@endo/far';
 
-const loc = {
-  lcd: 'http://localhost:1317',
-  rpc: 'http://localhost:26657',
-};
-
-export const make = async net => {
-  const [lcd, rpc] = await Promise.all([
-    E(net).makeLCDClient(loc.lcd),
-    E(net).makeRPCClient(loc.rpc),
-  ]);
-
-  return harden({ lcd, rpc });
-};
+export const make = async net =>
+  harden({
+    lcd: await E(net).makeLCDClient('http://localhost:1317'),
+    rpc: await E(net).makeRPCClient('http://localhost:26657'),
+  });
